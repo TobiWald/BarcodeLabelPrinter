@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Etikettendrucker</title>
+<meta name="description" content="Barcode-Etiketten für den Phomemo Q31 direkt aus dem Browser drucken">
+<meta name="theme-color" content="#0a6c7c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Etiketten">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#e3e8ec; --surface:#f5f7f9; --raised:#ffffff;
+  --ink:#16202a; --muted:#566472; --faint:#8794a0; --line:#cdd5dc;
+  --accent:#0a6c7c; --accent-ink:#ffffff; --accent-soft:#d2e9ed;
+  --good:#1e7a3a; --good-soft:#d9eee0; --warn:#a3510f; --warn-soft:#f7e6d3; --bad:#b3261e; --bad-soft:#f6dad7;
+  --scrim:rgb(8 14 20 / .5);
+  --shadow:0 1px 2px rgb(14 22 30 / .06), 0 12px 32px rgb(14 22 30 / .14);
+  --label-shadow:0 0 0 1px rgb(14 22 30 / .10), 0 2px 6px rgb(14 22 30 / .10);
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"Roboto Mono",Menlo,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1216; --surface:#141b21; --raised:#1a2229;
+    --ink:#e1e7ec; --muted:#98a5b0; --faint:#6b7883; --line:#29333c;
+    --accent:#3dbfce; --accent-ink:#03262b; --accent-soft:#11343a;
+    --good:#5cc47c; --good-soft:#132c1c; --warn:#eba35c; --warn-soft:#33240f; --bad:#f07b72; --bad-soft:#391b19;
+    --scrim:rgb(0 0 0 / .6);
+    --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .5);
+    --label-shadow:0 0 0 1px rgb(0 0 0 / .5), 0 2px 8px rgb(0 0 0 / .45);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1216; --surface:#141b21; --raised:#1a2229;
+  --ink:#e1e7ec; --muted:#98a5b0; --faint:#6b7883; --line:#29333c;
+  --accent:#3dbfce; --accent-ink:#03262b; --accent-soft:#11343a;
+  --good:#5cc47c; --good-soft:#132c1c; --warn:#eba35c; --warn-soft:#33240f; --bad:#f07b72; --bad-soft:#391b19;
+  --scrim:rgb(0 0 0 / .6);
+  --shadow:0 1px 2px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .5);
+  --label-shadow:0 0 0 1px rgb(0 0 0 / .5), 0 2px 8px rgb(0 0 0 / .45);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 var(--f-body);min-height:100dvh;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+/* Kopfzeile */
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.top .wrap{display:flex;align-items:center;gap:10px;height:58px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em;margin-right:auto;min-width:0}
+.brand svg{flex:none;color:var(--accent)}
+.brand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-size:14px;font-weight:600;white-space:nowrap}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none}
+.chip.on .dot{background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
+.chip.busy .dot{background:var(--warn);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.icon-btn{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;border:0;background:transparent;color:var(--muted)}
+.icon-btn:hover{background:var(--surface);color:var(--ink)}
+
+main{padding:16px 0 calc(130px + env(safe-area-inset-bottom))}
+
+/* Hinweise */
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r);background:var(--warn-soft);color:var(--ink);font-size:14px;margin-bottom:14px}
+.banner b{color:var(--warn)}
+.banner[hidden]{display:none}
+
+/* Eingabe */
+.add{background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:0 1px 2px rgb(14 22 30 / .04)}
+.add .lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 8px;letter-spacing:.02em;text-transform:uppercase}
+.add-row{display:flex;gap:8px}
+.inp{flex:1;min-width:0;height:50px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:17px}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.hint{margin:10px 2px 0;font-size:13px;color:var(--muted)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--raised);font-weight:700;font-size:16px;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:disabled{opacity:.45}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn.small{height:38px;padding:0 12px;font-size:14px;border-radius:10px}
+
+/* Druckliste */
+.queue{margin-top:22px}
+.queue-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 10px}
+.queue-head h2{margin:0;font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.link{border:0;background:none;padding:6px 2px;color:var(--accent);font-weight:600;font-size:14px}
+.link[hidden]{display:none}
+#list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.item{display:grid;grid-template-columns:minmax(104px,40%) 1fr;grid-template-areas:"lab meta" "lab ctl";gap:4px 14px;align-items:center;background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.item .lab{grid-area:lab}
+.item .meta{grid-area:meta;min-width:0}
+.item .ctl{grid-area:ctl;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nm{font-weight:700;font-size:16px;line-height:1.25;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.cd{font:500 12.5px/1.3 var(--f-mono);color:var(--muted);letter-spacing:.02em;margin-top:2px}
+.sticker{display:block;width:100%;height:auto;image-rendering:pixelated;background:#fff;border-radius:5px;box-shadow:var(--label-shadow)}
+.item .sticker{image-rendering:auto}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:11px;background:var(--surface);overflow:hidden}
+.stepper button{width:40px;height:38px;border:0;background:transparent;font-size:20px;font-weight:600;line-height:1;color:var(--ink)}
+.stepper button:disabled{color:var(--faint)}
+.stepper output{min-width:34px;text-align:center;font:600 16px var(--f-mono)}
+.x{width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:var(--faint);display:grid;place-items:center}
+.x:hover{color:var(--bad);background:var(--bad-soft)}
+.empty{text-align:center;padding:30px 20px;border:1.5px dashed var(--line);border-radius:var(--r);color:var(--muted);font-size:15px}
+.empty svg{color:var(--faint);margin-bottom:6px}
+.empty strong{display:block;color:var(--ink);margin-bottom:2px}
+
+/* Leiste unten */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--raised);border-top:1px solid var(--line);box-shadow:0 -8px 24px rgb(14 22 30 / .08);padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+.dock .wrap{display:flex;align-items:center;gap:12px}
+.dock-info{flex:1;min-width:0}
+.dock-info strong{display:block;font-size:17px;font-weight:800}
+.dock-info span{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn.big{height:54px;padding:0 22px;font-size:17px}
+.bar{height:6px;border-radius:3px;background:var(--surface);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .25s}
+
+/* Dialoge */
+dialog{border:0;padding:0;background:transparent;color:var(--ink);max-width:none;max-height:none;width:100%;height:100%;margin:0}
+dialog::backdrop{background:var(--scrim)}
+dialog[open]{display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:520px;background:var(--raised);border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:var(--shadow);max-height:92dvh;overflow:auto}
+.sheet{min-width:0}
+.sheet.anim{animation:up .2s ease-out}
+@media (prefers-reduced-motion: reduce){.sheet.anim{animation:none}}
+@media (min-width:600px){dialog[open]{align-items:center}.sheet{border-radius:20px;padding-bottom:18px}}
+@keyframes up{from{transform:translateY(24px);opacity:.4}}
+.sheet h3{margin:0 0 14px;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.sheet .preview{background:var(--surface);border-radius:12px;padding:18px;display:grid;place-items:center;margin-bottom:8px}
+.sheet .preview .sticker{max-width:300px}
+.sheet .code{text-align:center;font:500 13px var(--f-mono);color:var(--muted);margin-bottom:14px}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600;background:var(--accent-soft);color:var(--ink)}
+.sheet .pillrow{text-align:center;margin:-4px 0 12px}
+.qty-big{display:flex;align-items:center;justify-content:center;gap:12px;margin:4px 0 12px}
+.qty-big button{width:58px;height:58px;border-radius:16px;border:1px solid var(--line);background:var(--surface);font-size:28px;font-weight:600;line-height:1}
+.qty-big input{width:110px;height:58px;text-align:center;border-radius:16px;border:1px solid var(--line);background:var(--surface);font:600 30px var(--f-mono)}
+.qty-big input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.quick{display:flex;justify-content:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.quick button{min-width:56px;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--raised);font:600 15px var(--f-mono)}
+.quick button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.actions{display:flex;gap:10px}
+.actions .btn{flex:1}
+.field{margin-bottom:18px}
+.field > .lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.02em;text-transform:uppercase}
+.sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.sizes button{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font:600 14px var(--f-mono)}
+.sizes button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.range{display:flex;align-items:center;gap:12px}
+.range input{flex:1;accent-color:var(--accent);height:30px}
+.range output{font:600 16px var(--f-mono);min-width:22px;text-align:right}
+.range-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:2px}
+.dev{font-size:14px;color:var(--muted);background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:18px}
+.dev b{color:var(--ink)}
+.textbtn{border:0;background:none;padding:8px 4px;color:var(--accent);font-weight:600;font-size:14px;text-align:center}
+.stack{display:grid;gap:10px}
+
+/* Toast */
+#toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:20;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);width:max-content}
+#toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast.bad{background:var(--bad);color:#fff}
+#toast button{border:0;background:none;color:inherit;font-weight:800;text-decoration:underline;padding:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="7" width="26" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 11v8M10 11v8M12 11v8M15 11v8M18 11v8M19.5 11v8M23 11v8" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span>Etiketten</span>
+    </div>
+    <button type="button" class="chip" id="printerChip" data-action="connect"><span class="dot"></span><span class="txt">Drucker verbinden</span></button>
+    <button type="button" class="icon-btn" data-action="settings" aria-label="Einstellungen">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="btWarn" class="banner" hidden></div>
+
+  <form id="addForm" class="add" autocomplete="off">
+    <label for="nameIn" class="lbl">Produktname</label>
+    <div class="add-row">
+      <input id="nameIn" class="inp" type="text" placeholder="z. B. Erdbeermarmelade" maxlength="60" enterkeyhint="next" autocorrect="off" spellcheck="false">
+      <button class="btn primary" type="submit">Weiter</button>
+    </div>
+    <p class="hint">Der Barcode entsteht automatisch aus dem Namen. Gleicher Name, gleicher Barcode, auch beim Nachdrucken.</p>
+  </form>
+
+  <section class="queue" aria-labelledby="qh">
+    <div class="queue-head">
+      <h2 id="qh">Druckliste</h2>
+      <button type="button" class="link" id="clearBtn" data-action="clear" hidden>Liste leeren</button>
+    </div>
+    <ul id="list"></ul>
+  </section>
+</main>
+
+<footer class="dock">
+  <div class="wrap">
+    <div class="dock-info">
+      <strong id="sumMain">0 Etiketten</strong>
+      <span id="sumSub">Noch nichts in der Liste</span>
+      <div class="bar" id="bar" hidden><i></i></div>
+    </div>
+    <button type="button" class="btn primary big" id="printBtn" data-action="print" disabled>Alles drucken</button>
+  </div>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script id="core">
+/* ===== Etikett, Barcode und Druckdaten (ohne Abhängigkeiten) ===== */
+const DOTS_PER_MM = 8; // 203 dpi
+const SIZES = {
+  '40x12': { w: 40, h: 12 }, '30x12': { w: 30, h: 12 },
+  '40x14': { w: 40, h: 14 }, '30x14': { w: 30, h: 14 },
+  '40x15': { w: 40, h: 15 }, '30x15': { w: 30, h: 15 }, '50x15': { w: 50, h: 15 }
+};
+const FONT_TEXT = '"Figtree", Roboto, "Helvetica Neue", Arial, sans-serif';
+const FONT_DIGITS = '"IBM Plex Mono", "Roboto Mono", "DejaVu Sans Mono", monospace';
+
+function normName(s) { return String(s || '').replace(/\s+/g, ' ').trim(); }
+function nameKey(s) { return normName(s).toLocaleLowerCase('de-DE'); }
+
+// 53-Bit-Hash (cyrb53), damit derselbe Name immer denselben Code bekommt
+function cyrb53(str, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+
+function eanCheckDigit(d12) {
+  let s = 0;
+  for (let i = 0; i < 12; i++) s += (+d12[i]) * (i % 2 ? 3 : 1);
+  return String((10 - (s % 10)) % 10);
+}
+
+// EAN-13 mit Präfix 20 (GS1-Bereich für interne Artikelnummern)
+function codeForName(name) {
+  const n = cyrb53(nameKey(name)) % 1e10;
+  const d12 = '20' + String(n).padStart(10, '0');
+  return d12 + eanCheckDigit(d12);
+}
+
+function prettyCode(c) { return c[0] + ' ' + c.slice(1, 7) + ' ' + c.slice(7); }
+
+const EAN_L = ['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+const EAN_G = ['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
+const EAN_R = ['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+const EAN_PARITY = ['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+
+function eanModules(code) {
+  const p = EAN_PARITY[+code[0]];
+  let s = '101';
+  for (let i = 1; i <= 6; i++) s += (p[i - 1] === 'L' ? EAN_L : EAN_G)[+code[i]];
+  s += '01010';
+  for (let i = 7; i <= 12; i++) s += EAN_R[+code[i]];
+  return s + '101'; // 95 Module
+}
+function isGuardModule(i) { return i < 3 || (i >= 45 && i < 50) || i >= 92; }
+
+// Zeichnet das Etikett quer (wie es aufgeklebt aussieht), 8 Punkte pro mm
+function drawLabel(canvas, name, code, sizeKey) {
+  const size = SIZES[sizeKey] || SIZES['40x12'];
+  const W = size.w * DOTS_PER_MM, H = size.h * DOTS_PER_MM;
+  canvas.width = W; canvas.height = H;
+  const c = canvas.getContext('2d', { willReadFrequently: true });
+  c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+  c.fillStyle = '#000';
+
+  const padX = 8, padY = Math.max(4, Math.round(H * 0.05));
+  const maxText = W - 2 * padX;
+
+  // Produktname: so groß wie möglich, notfalls gekürzt
+  let fs = Math.round(H * 0.22);
+  const minFs = Math.round(H * 0.14);
+  let text = normName(name);
+  const setFont = () => { c.font = `800 ${fs}px ${FONT_TEXT}`; };
+  setFont();
+  while (fs > minFs && c.measureText(text).width > maxText) { fs--; setFont(); }
+  if (c.measureText(text).width > maxText) {
+    while (text.length > 1 && c.measureText(text + '…').width > maxText) text = text.slice(0, -1);
+    text = text.trimEnd() + '…';
+  }
+  c.textAlign = 'center';
+  c.textBaseline = 'alphabetic';
+  const nameBase = padY + Math.round(fs * 0.78);
+  c.fillText(text, W / 2, nameBase);
+
+  // Barcode
+  const mod = Math.max(1, Math.floor(W / 117));
+  const bits = eanModules(code);
+  const x0 = Math.round((W - 95 * mod) / 2);
+  const dfs = Math.round(H * 0.135);
+  const digitBase = H - padY;
+  const capH = Math.round(dfs * 0.72);
+  const top = nameBase + Math.round(fs * 0.24) + 2;
+  const barEnd = digitBase - capH - 2;
+  const guardEnd = digitBase - Math.round(capH * 0.45);
+  for (let i = 0; i < 95; i++) {
+    if (bits[i] !== '1') continue;
+    const end = isGuardModule(i) ? guardEnd : barEnd;
+    c.fillRect(x0 + i * mod, top, mod, end - top);
+  }
+
+  // Ziffern in klassischer EAN-Anordnung
+  c.font = `600 ${dfs}px ${FONT_DIGITS}`;
+  c.fillText(code[0], x0 - 4.5 * mod, digitBase);
+  for (let i = 1; i <= 6; i++) c.fillText(code[i], x0 + (3 + (i - 1) * 7 + 3.5) * mod, digitBase);
+  for (let i = 7; i <= 12; i++) c.fillText(code[i], x0 + (50 + (i - 7) * 7 + 3.5) * mod, digitBase);
+  return { W, H };
+}
+
+// Graustufen in reines Schwarz/Weiß umwandeln (1 = Punkt drucken)
+function toBits(canvas, threshold = 150) {
+  const { width: W, height: H } = canvas;
+  const px = canvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, W, H).data;
+  const bits = new Uint8Array(W * H);
+  for (let i = 0, j = 0; j < bits.length; i += 4, j++) {
+    const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    bits[j] = (px[i + 3] > 127 && lum < threshold) ? 1 : 0;
+  }
+  return { bits, W, H };
+}
+
+// Vorschau zeigt genau das, was gedruckt wird
+function paintBits(canvas, { bits, W, H }) {
+  canvas.width = W; canvas.height = H;
+  const c = canvas.getContext('2d');
+  const img = c.createImageData(W, H);
+  for (let j = 0, i = 0; j < bits.length; j++, i += 4) {
+    const v = bits[j] ? 0 : 255;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+  }
+  c.putImageData(img, 0, 0);
+}
+
+// Der Q31/D30 druckt hochkant: Bild 90° im Uhrzeigersinn drehen und in Bytes packen
+function toPrinterRaster({ bits, W, H }) {
+  const widthBytes = Math.ceil(H / 8);
+  const data = new Uint8Array(widthBytes * W);
+  for (let sy = 0; sy < H; sy++) {
+    const dx = H - 1 - sy, off = dx >> 3, mask = 0x80 >> (dx & 7);
+    for (let sx = 0; sx < W; sx++) if (bits[sy * W + sx]) data[sx * widthBytes + off] |= mask;
+  }
+  return { data, widthBytes, rows: W };
+}
+
+const HEAT_TIMES = [40, 60, 80, 100, 120, 140, 160, 200];
+function labelCommands(raster, density) {
+  const heat = HEAT_TIMES[Math.max(1, Math.min(8, density | 0)) - 1];
+  const { widthBytes: wb, rows } = raster;
+  return {
+    heat: Uint8Array.of(0x1b, 0x37, 7, heat, 2),          // ESC 7: Heizzeit (Druckstärke)
+    media: Uint8Array.of(0x1f, 0x11, 0x0a),               // Etiketten mit Lücke
+    header: Uint8Array.of(0x1b, 0x40, 0x1d, 0x76, 0x30, 0x00, wb & 255, wb >> 8, rows & 255, rows >> 8),
+    data: raster.data,
+    end: Uint8Array.of(0x1b, 0x64, 0x00)                  // drucken, bis zur nächsten Lücke
+  };
+}
+</script>
+
+<script>
+/* ===== Drucker per Web Bluetooth ===== */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const BETWEEN_LABELS_MS = 600;
+
+class LabelPrinter {
+  constructor(onChange) {
+    this.device = null; this.ch = null; this.chunk = 128; this.onChange = onChange;
+    this._onDisc = () => { this.ch = null; this.onChange(); };
+  }
+  get connected() { return !!(this.device && this.device.gatt && this.device.gatt.connected && this.ch); }
+  get name() { return this.device ? (this.device.name || 'Drucker') : ''; }
+
+  async choose(showAll) {
+    const optionalServices = [0xff00, 0xffe0, 0xae30, '49535343-fe7d-4ae5-8fa9-9fafd205e455'];
+    const opts = showAll ? { acceptAllDevices: true, optionalServices } : {
+      filters: ['Q', 'D', 'P', 'M', 'T', 'Mr.in', 'Phomemo'].map(namePrefix => ({ namePrefix })),
+      optionalServices
+    };
+    const dev = await navigator.bluetooth.requestDevice(opts);
+    if (this.device && this.device !== dev) {
+      this.device.removeEventListener('gattserverdisconnected', this._onDisc);
+      try { this.device.gatt.disconnect(); } catch (e) {}
+    }
+    this.device = dev;
+    dev.addEventListener('gattserverdisconnected', this._onDisc);
+    await this.connect();
+  }
+
+  async connect() {
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const server = await this.device.gatt.connect();
+        this.ch = await this._findWriteChar(server);
+        this.chunk = 128;
+        this.onChange();
+        return;
+      } catch (e) { lastErr = e; await sleep(700); }
+    }
+    throw lastErr;
+  }
+
+  async _findWriteChar(server) {
+    try {
+      const s = await server.getPrimaryService(0xff00);
+      const ch = await s.getCharacteristic(0xff02);
+      try {
+        const n = await s.getCharacteristic(0xff03);
+        await n.startNotifications();
+      } catch (e) {}
+      return ch;
+    } catch (e) {}
+    for (const uuid of [0xffe0, 0xae30, '49535343-fe7d-4ae5-8fa9-9fafd205e455']) {
+      try {
+        const s = await server.getPrimaryService(uuid);
+        const chars = await s.getCharacteristics();
+        const ch = chars.find(c => c.properties.writeWithoutResponse || c.properties.write);
+        if (ch) return ch;
+      } catch (e) {}
+    }
+    throw new Error('Dieses Gerät hat keinen passenden Druckkanal.');
+  }
+
+  disconnect() { try { this.device && this.device.gatt.disconnect(); } catch (e) {} }
+
+  async _write(part) {
+    if (this.ch.properties.writeWithoutResponse) return this.ch.writeValueWithoutResponse(part);
+    return this.ch.writeValue(part);
+  }
+
+  async send(bytes, pause = 20) {
+    let i = 0;
+    while (i < bytes.length) {
+      const part = bytes.slice(i, i + this.chunk);
+      try { await this._write(part); }
+      catch (e) {
+        if (this.chunk > 20) { this.chunk = 20; continue; } // kleinere Pakete für Geräte mit kleiner MTU
+        throw e;
+      }
+      i += part.length;
+      if (pause) await sleep(pause);
+    }
+  }
+
+  async printLabel(raster, density) {
+    const cmd = labelCommands(raster, density);
+    await this.send(cmd.heat, 0); await sleep(30);
+    await this.send(cmd.media, 0); await sleep(30);
+    await this.send(cmd.header, 0);
+    await this.send(cmd.data, 20);
+    await sleep(100);
+    await this.send(cmd.end, 0);
+  }
+}
+
+/* ===== App ===== */
+const $ = s => document.querySelector(s);
+const LS_KEY = 'barcode-label-printer-v1';
+const S = {
+  items: [],                      // { id, name, code, qty }
+  settings: { size: '40x12', density: 6 },
+  printing: null,                 // { done, total, current, cancel }
+  connecting: false,
+  dialog: null,
+  removed: null
+};
+const printer = new LabelPrinter(() => renderChip());
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (d && Array.isArray(d.items)) S.items = d.items.filter(it => it && it.name && /^\d{13}$/.test(it.code)).map(it => ({ ...it, qty: clampQty(it.qty) }));
+    if (d && d.settings) {
+      if (SIZES[d.settings.size]) S.settings.size = d.settings.size;
+      const den = +d.settings.density; if (den >= 1 && den <= 8) S.settings.density = den;
+    }
+  } catch (e) {}
+}
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify({ items: S.items, settings: S.settings })); } catch (e) {} }
+
+function clampQty(n) { n = Math.round(+n); return Number.isFinite(n) ? Math.max(1, Math.min(999, n)) : 1; }
+function esc(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// Fertig gerendertes Etikett (Schwarz/Weiß), gecacht pro Name, Code und Größe
+const bitCache = new Map();
+const work = document.createElement('canvas');
+function labelBits(name, code, size = S.settings.size) {
+  const key = size + '|' + code + '|' + name;
+  let b = bitCache.get(key);
+  if (!b) {
+    drawLabel(work, name, code, size);
+    b = toBits(work);
+    bitCache.set(key, b);
+  }
+  return b;
+}
+function stickerCanvas(name, code) {
+  const cv = document.createElement('canvas');
+  cv.className = 'sticker';
+  paintBits(cv, labelBits(name, code));
+  cv.setAttribute('role', 'img');
+  cv.setAttribute('aria-label', 'Etikett ' + name + ', Barcode ' + code);
+  return cv;
+}
+
+/* ---------- Rendern ---------- */
+function totals() { return S.items.reduce((a, it) => a + it.qty, 0); }
+
+function render() { renderList(); renderDock(); renderChip(); }
+
+function renderList() {
+  const ul = $('#list');
+  $('#clearBtn').hidden = !S.items.length || !!S.printing;
+  if (!S.items.length) {
+    ul.innerHTML = '<li class="empty"><svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="12" width="36" height="20" rx="4"/><path d="M11 17v10M15 17v10M18 17v10M22 17v10M26 17v10M28 17v10M33 17v10" stroke-width="1.6"/></svg><strong>Noch nichts in der Liste</strong>Gib oben einen Produktnamen ein. Du kannst beliebig viele Produkte sammeln und dann alles auf einmal drucken.</li>';
+    return;
+  }
+  ul.innerHTML = '';
+  const busy = !!S.printing;
+  for (const it of S.items) {
+    const li = document.createElement('li');
+    li.className = 'item';
+    li.dataset.id = it.id;
+    li.innerHTML =
+      '<div class="lab"></div>' +
+      '<div class="meta"><div class="nm">' + esc(it.name) + '</div><div class="cd">' + prettyCode(it.code) + '</div></div>' +
+      '<div class="ctl">' +
+        '<div class="stepper" role="group" aria-label="Anzahl für ' + esc(it.name) + '">' +
+          '<button type="button" data-action="dec" aria-label="Eins weniger"' + (it.qty <= 1 || busy ? ' disabled' : '') + '>−</button>' +
+          '<output aria-live="polite">' + it.qty + '</output>' +
+          '<button type="button" data-action="inc" aria-label="Eins mehr"' + (it.qty >= 999 || busy ? ' disabled' : '') + '>+</button>' +
+        '</div>' +
+        '<button type="button" class="x" data-action="remove" aria-label="' + esc(it.name) + ' entfernen"' + (busy ? ' disabled' : '') + '>' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+        '</button>' +
+      '</div>';
+    li.querySelector('.lab').appendChild(stickerCanvas(it.name, it.code));
+    ul.appendChild(li);
+  }
+}
+
+function renderDock() {
+  const n = totals(), btn = $('#printBtn'), bar = $('#bar');
+  if (S.printing) {
+    const p = S.printing;
+    $('#sumMain').textContent = 'Etikett ' + Math.min(p.done + 1, p.total) + ' von ' + p.total;
+    $('#sumSub').textContent = p.cancel ? 'Wird nach diesem Etikett gestoppt …' : (p.current || '');
+    bar.hidden = false;
+    bar.firstElementChild.style.width = Math.round(p.done / p.total * 100) + '%';
+    btn.textContent = 'Stopp';
+    btn.dataset.action = 'stop';
+    btn.classList.remove('primary');
+    btn.disabled = p.cancel;
+    return;
+  }
+  bar.hidden = true;
+  btn.dataset.action = 'print';
+  btn.classList.add('primary');
+  btn.textContent = 'Alles drucken';
+  btn.disabled = !n;
+  $('#sumMain').textContent = plural(n, 'Etikett', 'Etiketten');
+  $('#sumSub').textContent = S.items.length
+    ? plural(S.items.length, 'Produkt', 'Produkte') + ' · ' + S.settings.size.replace('x', ' × ') + ' mm'
+    : 'Noch nichts in der Liste';
+}
+
+function renderChip() {
+  const chip = $('#printerChip');
+  chip.classList.toggle('on', printer.connected);
+  chip.classList.toggle('busy', S.connecting);
+  chip.querySelector('.txt').textContent = S.connecting ? 'Verbinde …' : printer.connected ? printer.name : printer.device ? 'Neu verbinden' : 'Drucker verbinden';
+  if (S.dialog && S.dialog.type === 'settings') renderDialog();
+}
+
+/* ---------- Dialoge ---------- */
+const dlg = $('#dlg');
+function openDialog(d) { S.dialog = d; d.anim = true; renderDialog(); if (!dlg.open) dlg.showModal(); }
+function closeDialog() { S.dialog = null; if (dlg.open) dlg.close(); }
+dlg.addEventListener('close', () => { S.dialog = null; });
+dlg.addEventListener('click', e => { if (e.target === dlg) closeDialog(); });
+
+function renderDialog() {
+  const d = S.dialog;
+  if (!d) return;
+  const anim = d.anim ? ' anim' : '';
+  d.anim = false;
+  if (d.type === 'qty') {
+    const existing = S.items.find(it => it.code === d.code);
+    dlg.innerHTML =
+      '<form class="sheet' + anim + '" id="qtyForm">' +
+        '<h3 id="dlgTitle">Wie oft drucken?</h3>' +
+        '<div class="preview"></div>' +
+        '<div class="code">' + prettyCode(d.code) + '</div>' +
+        (existing ? '<div class="pillrow"><span class="pill">Schon ' + existing.qty + '× in der Liste, wird dazugezählt</span></div>' : '') +
+        '<div class="qty-big">' +
+          '<button type="button" data-action="qminus" aria-label="Eins weniger">−</button>' +
+          '<input id="qtyIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + d.qty + '" aria-label="Anzahl">' +
+          '<button type="button" data-action="qplus" aria-label="Eins mehr">+</button>' +
+        '</div>' +
+        '<div class="quick">' + [1, 5, 10, 20, 50].map(n => '<button type="button" data-action="qset" data-n="' + n + '" aria-pressed="' + (d.qty === n) + '">' + n + '</button>').join('') + '</div>' +
+        '<div class="actions">' +
+          '<button type="button" class="btn ghost" data-action="close">Abbrechen</button>' +
+          '<button type="submit" class="btn primary">In die Liste</button>' +
+        '</div>' +
+      '</form>';
+    dlg.querySelector('.preview').appendChild(stickerCanvas(d.name, d.code));
+    return;
+  }
+  if (d.type === 'settings') {
+    const sizeBtns = Object.keys(SIZES).map(k => '<button type="button" data-action="size" data-size="' + k + '" aria-pressed="' + (S.settings.size === k) + '">' + k.replace('x', ' × ') + '</button>').join('');
+    const dev = printer.connected
+      ? 'Verbunden mit <b>' + esc(printer.name) + '</b>'
+      : printer.device ? '<b>' + esc(printer.name) + '</b> ist gerade nicht verbunden' : 'Noch kein Drucker verbunden';
+    dlg.innerHTML =
+      '<div class="sheet' + anim + '">' +
+        '<h3 id="dlgTitle">Einstellungen</h3>' +
+        '<div class="field"><span class="lbl">Etikettengröße (mm)</span><div class="sizes">' + sizeBtns + '</div></div>' +
+        '<div class="field"><span class="lbl">Druckstärke</span>' +
+          '<div class="range"><input type="range" id="denIn" min="1" max="8" step="1" value="' + S.settings.density + '" aria-label="Druckstärke"><output id="denOut">' + S.settings.density + '</output></div>' +
+          '<div class="range-ends"><span>heller</span><span>dunkler</span></div></div>' +
+        '<div class="dev">' + dev + '</div>' +
+        '<div class="stack">' +
+          (printer.connected
+            ? '<button type="button" class="btn" data-action="test">Testetikett drucken</button><button type="button" class="btn ghost" data-action="disconnect">Trennen</button>'
+            : '<button type="button" class="btn" data-action="connect">Drucker verbinden</button><button type="button" class="textbtn" data-action="connect-all">Drucker taucht nicht auf? Alle Geräte anzeigen</button>') +
+          '<button type="button" class="btn primary" data-action="close">Fertig</button>' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+  if (d.type === 'clear') {
+    dlg.innerHTML =
+      '<div class="sheet' + anim + '">' +
+        '<h3 id="dlgTitle">Liste leeren?</h3>' +
+        '<p style="margin:0 0 18px;color:var(--muted)">' + plural(S.items.length, 'Produkt wird', 'Produkte werden') + ' aus der Druckliste entfernt.</p>' +
+        '<div class="actions"><button type="button" class="btn ghost" data-action="close">Abbrechen</button><button type="button" class="btn primary" data-action="clear-yes">Leeren</button></div>' +
+      '</div>';
+  }
+}
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg, opts = {}) {
+  const t = $('#toast');
+  t.className = '';
+  t.innerHTML = '<span>' + esc(msg) + '</span>' + (opts.undo ? '<button type="button" data-action="undo">Rückgängig</button>' : '');
+  if (opts.bad) t.classList.add('bad');
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), opts.ms || 3200);
+}
+
+/* ---------- Ablauf ---------- */
+function startAdd(raw) {
+  const name = normName(raw);
+  if (!name) { $('#nameIn').focus(); return; }
+  openDialog({ type: 'qty', name, code: codeForName(name), qty: 1 });
+  setTimeout(() => { const q = $('#qtyIn'); if (q) { q.focus(); q.select(); } }, 60);
+}
+
+function commitQty() {
+  const d = S.dialog;
+  if (!d || d.type !== 'qty') return;
+  const qty = clampQty($('#qtyIn').value);
+  const existing = S.items.find(it => it.code === d.code);
+  if (existing) existing.qty = clampQty(existing.qty + qty);
+  else S.items.push({ id: uid(), name: d.name, code: d.code, qty });
+  save();
+  closeDialog();
+  $('#nameIn').value = '';
+  render();
+  toast(existing ? d.name + ': jetzt ' + existing.qty + '×' : d.name + ' hinzugefügt (' + qty + '×)');
+  $('#nameIn').focus();
+}
+
+function setDialogQty(n) {
+  if (!S.dialog || S.dialog.type !== 'qty') return;
+  S.dialog.qty = clampQty(n);
+  $('#qtyIn').value = S.dialog.qty;
+  dlg.querySelectorAll('[data-action="qset"]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === S.dialog.qty)));
+}
+
+function btAvailable() { return 'bluetooth' in navigator; }
+
+async function connectPrinter(showAll) {
+  if (!btAvailable()) { toast('Dieser Browser kann nicht per Bluetooth drucken.', { bad: true }); return false; }
+  S.connecting = true; renderChip();
+  try {
+    if (!showAll && printer.device && !printer.connected) await printer.connect();
+    else await printer.choose(showAll);
+    toast('Verbunden mit ' + printer.name);
+    return true;
+  } catch (e) {
+    if (e && e.name === 'NotFoundError' && /cancel/i.test(e.message || '')) return false; // Auswahl abgebrochen
+    console.error(e);
+    toast(connectErrorText(e), { bad: true, ms: 6000 });
+    return false;
+  } finally {
+    S.connecting = false; renderChip();
+  }
+}
+
+function connectErrorText(e) {
+  const m = (e && e.message) || '';
+  if (e && e.name === 'NotFoundError') return 'Kein Drucker gefunden. Ist der Q31 an und in der Nähe? Bluetooth und Standort am Handy einschalten.';
+  if (e && e.name === 'SecurityError') return 'Bluetooth ist für diese Seite blockiert. Seite über https öffnen.';
+  if (e && e.name === 'NotAllowedError') return 'Bluetooth-Zugriff wurde nicht erlaubt.';
+  return 'Verbindung fehlgeschlagen. Drucker aus- und wieder einschalten und nochmal versuchen.' + (m ? ' (' + m + ')' : '');
+}
+
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+
+async function printJobs(jobs) {
+  // jobs: [{ name, code, qty }]
+  const total = jobs.reduce((a, j) => a + j.qty, 0);
+  if (!total || S.printing) return;
+  if (!printer.connected) {
+    const ok = await connectPrinter(false);
+    if (!ok) return;
+  }
+  S.printing = { done: 0, total, current: '', cancel: false };
+  render(); keepAwake(true);
+  const density = S.settings.density, size = S.settings.size;
+  try {
+    outer:
+    for (const j of jobs) {
+      const raster = toPrinterRaster(labelBits(j.name, j.code, size));
+      for (let k = 0; k < j.qty; k++) {
+        if (S.printing.cancel) break outer;
+        S.printing.current = j.name + (j.qty > 1 ? ' (' + (k + 1) + '/' + j.qty + ')' : '');
+        renderDock();
+        if (!printer.connected) await printer.connect();
+        await printer.printLabel(raster, density);
+        S.printing.done++;
+        renderDock();
+        if (S.printing.done < total) await sleep(BETWEEN_LABELS_MS);
+      }
+    }
+    const { done, cancel } = S.printing;
+    toast(cancel ? 'Gestoppt nach ' + plural(done, 'Etikett', 'Etiketten') + '.' : 'Fertig: ' + plural(done, 'Etikett', 'Etiketten') + ' gedruckt.');
+  } catch (e) {
+    console.error(e);
+    const done = S.printing ? S.printing.done : 0;
+    toast('Druck abgebrochen nach ' + plural(done, 'Etikett', 'Etiketten') + '. Verbindung prüfen und nochmal drucken.', { bad: true, ms: 6000 });
+  } finally {
+    S.printing = null;
+    keepAwake(false);
+    render();
+  }
+}
+
+/* ---------- Ereignisse ---------- */
+$('#addForm').addEventListener('submit', e => { e.preventDefault(); startAdd($('#nameIn').value); });
+
+dlg.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'qtyForm') commitQty(); });
+dlg.addEventListener('input', e => {
+  if (e.target.id === 'qtyIn') {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+    if (S.dialog) {
+      S.dialog.qty = clampQty(e.target.value || 1);
+      dlg.querySelectorAll('[data-action="qset"]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === S.dialog.qty && e.target.value !== '')));
+    }
+  }
+  if (e.target.id === 'denIn') {
+    S.settings.density = +e.target.value;
+    $('#denOut').textContent = S.settings.density;
+    save();
+  }
+});
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el || el.disabled) return;
+  const li = el.closest('.item');
+  const it = li ? S.items.find(x => x.id === li.dataset.id) : null;
+  switch (el.dataset.action) {
+    case 'connect': closeDialog(); connectPrinter(false); break;
+    case 'connect-all': closeDialog(); connectPrinter(true); break;
+    case 'disconnect': printer.disconnect(); break;
+    case 'settings': openDialog({ type: 'settings' }); break;
+    case 'close': closeDialog(); break;
+    case 'print': printJobs(S.items.map(x => ({ name: x.name, code: x.code, qty: x.qty }))); break;
+    case 'stop': if (S.printing) { S.printing.cancel = true; renderDock(); } break;
+    case 'test': closeDialog(); printJobs([{ name: 'Testetikett', code: codeForName('Testetikett'), qty: 1 }]); break;
+    case 'inc': if (it) { it.qty = clampQty(it.qty + 1); save(); render(); } break;
+    case 'dec': if (it) { it.qty = clampQty(it.qty - 1); save(); render(); } break;
+    case 'remove':
+      if (it) {
+        const idx = S.items.indexOf(it);
+        S.items.splice(idx, 1);
+        S.removed = { item: it, idx };
+        save(); render();
+        toast(it.name + ' entfernt', { undo: true, ms: 5000 });
+      }
+      break;
+    case 'undo':
+      if (S.removed) {
+        const { item, idx } = S.removed;
+        if (!S.items.some(x => x.code === item.code)) S.items.splice(Math.min(idx, S.items.length), 0, item);
+        S.removed = null; save(); render();
+        $('#toast').classList.remove('show');
+      }
+      break;
+    case 'clear': openDialog({ type: 'clear' }); break;
+    case 'clear-yes': S.items = []; save(); closeDialog(); render(); toast('Liste geleert'); break;
+    case 'qminus': setDialogQty((S.dialog ? S.dialog.qty : 1) - 1); break;
+    case 'qplus': setDialogQty((S.dialog ? S.dialog.qty : 1) + 1); break;
+    case 'qset': setDialogQty(+el.dataset.n); break;
+    case 'size':
+      S.settings.size = el.dataset.size;
+      save(); renderDialog(); render();
+      break;
+  }
+});
+
+/* ---------- Start ---------- */
+function checkBluetooth() {
+  const box = $('#btWarn');
+  const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!btAvailable()) {
+    box.innerHTML = '<div><b>Kein Bluetooth in diesem Browser.</b> Du kannst die Liste vorbereiten, drucken klappt aber nur in Chrome auf Android oder am Computer' + (ios ? '. Auf dem iPhone geht es mit dem Browser Bluefy.' : '.') + '</div>';
+    box.hidden = false;
+    return;
+  }
+  if (navigator.bluetooth.getAvailability) {
+    navigator.bluetooth.getAvailability().then(ok => {
+      if (!ok) { box.innerHTML = '<div><b>Bluetooth ist aus.</b> Schalte Bluetooth am Gerät ein, um zu drucken.</div>'; box.hidden = false; }
+    }).catch(() => {});
+  }
+}
+
+load();
+render();
+checkBluetooth();
+// Sobald die Schriften geladen sind, Vorschau neu zeichnen (Druck nutzt dieselben Schriften)
+if (document.fonts && document.fonts.load) {
+  Promise.all([document.fonts.load('800 20px "Figtree"'), document.fonts.load('600 13px "IBM Plex Mono"')])
+    .then(() => { bitCache.clear(); render(); if (S.dialog && S.dialog.type === 'qty') renderDialog(); })
+    .catch(() => {});
+}
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
