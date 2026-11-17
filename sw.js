@@ -1,6 +1,6 @@
 // Etikettendrucker: hält die App offline verfügbar.
 // Bei einer neuen Version die Nummer erhöhen, dann holt das Handy die Dateien neu.
-const CACHE = 'etiketten-v1';
+const CACHE = 'etiketten-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

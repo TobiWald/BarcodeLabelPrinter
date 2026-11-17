@@ -12,11 +12,20 @@ Kleine Web-App, die Barcode-Etiketten direkt aus dem Browser auf einen **Phomemo
 
 Den Q31 **nicht** vorher in den Bluetooth-Einstellungen des Handys koppeln. Die Verbindung läuft direkt über die Seite.
 
+## Artikel aus der Barcode-Kasse übernehmen
+
+1. In der Kasse unter **Umsatz → Backup speichern** eine Sicherung erstellen.
+2. Die Datei aufs Handy schicken (Mail, Messenger, Google Drive).
+3. Hier auf **Artikel aus der Kasse** tippen und die Datei wählen.
+
+Übernommen werden nur Name und Barcode, keine Preise oder Umsätze. Danach kannst du Artikel ankreuzen, die Anzahl einstellen und alles in die Druckliste legen. Beim Eintippen eines Namens schlägt die App die Kassen-Artikel vor und nimmt automatisch deren Barcode. Läuft die Kasse im selben Browser auf demselben Gerät, kann die App die Artikel auch direkt übernehmen.
+
 ## Barcode
 
 - Format **EAN-13** mit Präfix `20` (GS1-Bereich für interne Artikelnummern), liest jeder Barcodescanner.
 - Der Code wird aus dem Produktnamen berechnet. Gleicher Name ergibt immer denselben Code, Groß-/Kleinschreibung und doppelte Leerzeichen spielen keine Rolle. So passt ein Nachdruck immer zum ersten Etikett.
 - Nur Ziffern, dadurch keine Probleme mit deutschem Tastaturlayout bei Scannern, die als Tastatur arbeiten.
+- Codes aus der Kasse werden so gedruckt, wie sie dort gespeichert sind: EAN-13, EAN-8 und UPC-A im Originalformat, alles andere (z. B. `17` oder `BRZ-01`) als Code 128. Passt ein Code nicht aufs gewählte Etikett, wird er markiert und beim Drucken übersprungen.
 
 ## Einstellungen
 
@@ -30,7 +39,7 @@ Die Druckliste und die Einstellungen bleiben im Browser gespeichert.
 
 ## Technik
 
-- Eine einzige `index.html`, ohne Bibliotheken. Barcode, Rasterung und Druckprotokoll sind selbst geschrieben.
+- Eine einzige `index.html`, ohne Bibliotheken. Barcodes (EAN-13, EAN-8, UPC-A, Code 128), Rasterung und Druckprotokoll sind selbst geschrieben.
 - Web Bluetooth, Service `0xFF00`, Schreibkanal `0xFF02`.
 - Druckprotokoll der Phomemo D30-Familie (der Q31 ist baugleich): `ESC 7` Heizzeit, `1F 11 0A` Etiketten mit Lücke, `ESC @` + `GS v 0` Rasterbild (90° gedreht, 8 Punkte/mm), `ESC d 0` bis zur nächsten Lücke.
 - Protokoll abgeleitet aus [Phomymo](https://github.com/transcriptionstream/phomymo) (MIT) und [phomemo_d30](https://github.com/polskafan/phomemo_d30).

@@ -144,7 +144,33 @@ dialog[open]{display:flex;align-items:flex-end;justify-content:center}
 .sheet .preview .sticker{max-width:300px}
 .sheet .code{text-align:center;font:500 13px var(--f-mono);color:var(--muted);margin-bottom:14px}
 .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600;background:var(--accent-soft);color:var(--ink)}
-.sheet .pillrow{text-align:center;margin:-4px 0 12px}
+.sheet .pillrow{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:-4px 0 12px}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.warnline{font-size:12.5px;color:var(--warn);font-weight:600;margin-top:3px}
+.add-more{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.kasse-btn{width:100%;color:var(--accent)}
+.sheet.tall{display:flex;flex-direction:column;height:min(88dvh,760px);overflow:hidden}
+.cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.cat-head h3{margin-bottom:2px}
+.cat-sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+.search{flex:none;width:100%;height:44px;font-size:16px;margin-bottom:6px}
+.cat-tools{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:38px;font-size:13px;color:var(--muted)}
+.cat-tools .textbtn{padding-left:0}
+.cat-list{list-style:none;margin:0 -18px;padding:0 18px;flex:1;min-height:120px;overflow:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overscroll-behavior:contain}
+.crow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.crow:last-child{border-bottom:0}
+.ctog{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:11px 0;border:0;background:none;text-align:left}
+.ctog:disabled{opacity:.55}
+.box{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;color:transparent}
+.crow.on .box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ctext{min-width:0;display:flex;flex-direction:column}
+.cname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ccode{font:500 12px/1.4 var(--f-mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stepper.sm button{width:34px;height:34px;font-size:18px}
+.stepper.sm output{min-width:28px;font-size:15px}
+.cat-empty{padding:28px 0;text-align:center;color:var(--muted)}
+.sheet.tall .actions{flex:none;margin-top:12px}
+.steps{margin:0 0 20px;padding-left:22px;font-size:15px;display:grid;gap:10px}
 .qty-big{display:flex;align-items:center;justify-content:center;gap:12px;margin:4px 0 12px}
 .qty-big button{width:58px;height:58px;border-radius:16px;border:1px solid var(--line);background:var(--surface);font-size:28px;font-weight:600;line-height:1}
 .qty-big input{width:110px;height:58px;text-align:center;border-radius:16px;border:1px solid var(--line);background:var(--surface);font:600 30px var(--f-mono)}
@@ -167,6 +193,7 @@ dialog[open]{display:flex;align-items:flex-end;justify-content:center}
 .dev b{color:var(--ink)}
 .textbtn{border:0;background:none;padding:8px 4px;color:var(--accent);font-weight:600;font-size:14px;text-align:center}
 .stack{display:grid;gap:10px}
+.stack .btn{white-space:normal;height:auto;min-height:50px;padding:10px 16px;text-align:center;line-height:1.25}
 
 /* Toast */
 #toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:20;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);width:max-content}
@@ -197,10 +224,17 @@ dialog[open]{display:flex;align-items:flex-end;justify-content:center}
   <form id="addForm" class="add" autocomplete="off">
     <label for="nameIn" class="lbl">Produktname</label>
     <div class="add-row">
-      <input id="nameIn" class="inp" type="text" placeholder="z. B. Erdbeermarmelade" maxlength="60" enterkeyhint="next" autocorrect="off" spellcheck="false">
+      <input id="nameIn" class="inp" type="text" list="catNames" placeholder="z. B. Erdbeermarmelade" maxlength="60" enterkeyhint="next" autocorrect="off" spellcheck="false">
       <button class="btn primary" type="submit">Weiter</button>
     </div>
-    <p class="hint">Der Barcode entsteht automatisch aus dem Namen. Gleicher Name, gleicher Barcode, auch beim Nachdrucken.</p>
+    <p class="hint" id="addHint">Der Barcode entsteht automatisch aus dem Namen. Gleicher Name, gleicher Barcode, auch beim Nachdrucken.</p>
+    <div class="add-more">
+      <button type="button" class="btn small kasse-btn" data-action="catalog">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+        <span id="catBtnTxt">Artikel aus der Kasse</span>
+      </button>
+    </div>
+    <datalist id="catNames"></datalist>
   </form>
 
   <section class="queue" aria-labelledby="qh">
@@ -255,20 +289,35 @@ function cyrb53(str, seed = 0) {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
 
-function eanCheckDigit(d12) {
+// Prüfziffer für EAN/UPC: von rechts abwechselnd ×3 und ×1
+function gtinCheck(data) {
   let s = 0;
-  for (let i = 0; i < 12; i++) s += (+d12[i]) * (i % 2 ? 3 : 1);
+  for (let i = data.length - 1, w = 3; i >= 0; i--, w = 4 - w) s += (+data[i]) * w;
   return String((10 - (s % 10)) % 10);
 }
-
-// EAN-13 mit Präfix 20 (GS1-Bereich für interne Artikelnummern)
-function codeForName(name) {
-  const n = cyrb53(nameKey(name)) % 1e10;
-  const d12 = '20' + String(n).padStart(10, '0');
-  return d12 + eanCheckDigit(d12);
+function eanCheckDigit(d12) { return gtinCheck(d12); }
+function validGtin(code, len) {
+  return code.length === len && /^\d+$/.test(code) && gtinCheck(code.slice(0, -1)) === code[len - 1];
 }
 
-function prettyCode(c) { return c[0] + ' ' + c.slice(1, 7) + ' ' + c.slice(7); }
+// EAN-13 mit Präfix 20 (GS1-Bereich für interne Artikelnummern).
+// isTaken: optional, falls der Code schon zu einem anderen Artikel gehört
+function codeForName(name, isTaken) {
+  for (let seed = 0; seed < 50; seed++) {
+    const n = cyrb53(nameKey(name), seed) % 1e10;
+    const d12 = '20' + String(n).padStart(10, '0');
+    const code = d12 + gtinCheck(d12);
+    if (!isTaken || !isTaken(code)) return code;
+  }
+  return '';
+}
+
+function prettyCode(c) {
+  c = String(c);
+  if (validGtin(c, 13)) return c[0] + ' ' + c.slice(1, 7) + ' ' + c.slice(7);
+  if (validGtin(c, 8)) return c.slice(0, 4) + ' ' + c.slice(4);
+  return c;
+}
 
 const EAN_L = ['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
 const EAN_G = ['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
@@ -283,7 +332,88 @@ function eanModules(code) {
   for (let i = 7; i <= 12; i++) s += EAN_R[+code[i]];
   return s + '101'; // 95 Module
 }
-function isGuardModule(i) { return i < 3 || (i >= 45 && i < 50) || i >= 92; }
+function ean8Modules(code) {
+  let s = '101';
+  for (let i = 0; i < 4; i++) s += EAN_L[+code[i]];
+  s += '01010';
+  for (let i = 4; i < 8; i++) s += EAN_R[+code[i]];
+  return s + '101'; // 67 Module
+}
+
+// Code 128 (Zeichensatz B für Text, C für Ziffernpaare), für alle anderen Codes
+const C128 = '212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112'.split(' ');
+function code128Values(s) {
+  if (!s || !/^[\x20-\x7e]+$/.test(s)) return null;
+  const isDigit = k => s.charCodeAt(k) >= 48 && s.charCodeAt(k) <= 57;
+  const run = j => { let k = j; while (k < s.length && isDigit(k)) k++; return k - j; };
+  const v = [];
+  const r0 = run(0);
+  let set = (r0 >= 4 || (r0 === s.length && r0 >= 2 && r0 % 2 === 0)) ? 'C' : 'B';
+  v.push(set === 'C' ? 105 : 104);
+  let i = 0;
+  while (i < s.length) {
+    if (set === 'C') {
+      if (run(i) >= 2) { v.push(+s.substr(i, 2)); i += 2; continue; }
+      v.push(100); set = 'B';
+      continue;
+    }
+    const r = run(i);
+    if (r >= 6 || (r >= 4 && i + r === s.length)) {
+      if (r % 2) { v.push(s.charCodeAt(i) - 32); i++; }
+      v.push(99); set = 'C';
+      continue;
+    }
+    v.push(s.charCodeAt(i) - 32); i++;
+  }
+  let sum = v[0];
+  for (let k = 1; k < v.length; k++) sum += v[k] * k;
+  v.push(sum % 103, 106);
+  return v;
+}
+function code128Modules(s) {
+  const v = code128Values(s);
+  if (!v) return null;
+  let m = '';
+  for (const sym of v) {
+    const w = C128[sym];
+    for (let k = 0; k < w.length; k++) m += (k % 2 ? '0' : '1').repeat(+w[k]);
+  }
+  return m;
+}
+
+// Passendes Format zum Code: EAN-13, UPC-A, EAN-8 oder Code 128
+function symbolFor(code) {
+  code = String(code);
+  const eanDigits = c => [[c[0], -4.5]]
+    .concat([1, 2, 3, 4, 5, 6].map(i => [c[i], 3 + (i - 1) * 7 + 3.5]))
+    .concat([7, 8, 9, 10, 11, 12].map(i => [c[i], 50 + (i - 7) * 7 + 3.5]));
+  const eanGuard = i => i < 3 || (i >= 45 && i < 50) || i >= 92;
+  if (validGtin(code, 13)) return { type: 'EAN-13', bits: eanModules(code), guard: eanGuard, quiet: [11, 7], digits: eanDigits(code) };
+  if (validGtin(code, 12)) {
+    // UPC-A ist ein EAN-13 mit führender 0, Scanner liefern den Code wie auf der Originalverpackung
+    const d = eanDigits('0' + code).slice(1);
+    const digits = [[code[0], -4.5], ...d.slice(1, 11), [code[11], 95 + 4.5]];
+    return { type: 'UPC-A', bits: eanModules('0' + code), guard: i => eanGuard(i) || (i >= 3 && i < 10) || (i >= 85 && i < 92), quiet: [9, 9], digits };
+  }
+  if (validGtin(code, 8)) {
+    const digits = [0, 1, 2, 3].map(i => [code[i], 3 + i * 7 + 3.5]).concat([4, 5, 6, 7].map(i => [code[i], 36 + (i - 4) * 7 + 3.5]));
+    return { type: 'EAN-8', bits: ean8Modules(code), guard: i => i < 3 || (i >= 31 && i < 36) || i >= 64, quiet: [7, 7], digits };
+  }
+  const bits = code128Modules(code);
+  if (bits) return { type: 'Code 128', bits, guard: null, quiet: [10, 10], text: code };
+  return null;
+}
+
+// Passt der Barcode aufs Etikett? mod = Breite eines Moduls in Druckpunkten
+function barcodeFit(code, sizeKey) {
+  const size = SIZES[sizeKey] || SIZES['40x12'];
+  const W = size.w * DOTS_PER_MM;
+  const sym = symbolFor(code);
+  if (!sym) return { ok: false, mod: 0, sym: null, reason: 'Code enthält Zeichen, die kein Barcode kann' };
+  const mod = Math.min(3, Math.floor((W - 4) / (sym.bits.length + sym.quiet[0] + sym.quiet[1])));
+  if (mod < 1) return { ok: false, mod: 0, sym, reason: 'Code ist zu lang für dieses Etikett' };
+  return { ok: true, mod, sym, reason: mod === 1 ? 'Barcode wird sehr schmal, evtl. schlecht lesbar' : '' };
+}
 
 // Zeichnet das Etikett quer (wie es aufgeklebt aussieht), 8 Punkte pro mm
 function drawLabel(canvas, name, code, sizeKey) {
@@ -314,27 +444,38 @@ function drawLabel(canvas, name, code, sizeKey) {
   c.fillText(text, W / 2, nameBase);
 
   // Barcode
-  const mod = Math.max(1, Math.floor(W / 117));
-  const bits = eanModules(code);
-  const x0 = Math.round((W - 95 * mod) / 2);
+  const fit = barcodeFit(code, sizeKey);
   const dfs = Math.round(H * 0.135);
   const digitBase = H - padY;
   const capH = Math.round(dfs * 0.72);
   const top = nameBase + Math.round(fs * 0.24) + 2;
+  if (!fit.ok) {
+    c.font = `700 ${dfs}px ${FONT_TEXT}`;
+    c.fillText('Barcode passt nicht', W / 2, Math.round((top + H) / 2));
+    return { W, H, ok: false };
+  }
+  const { mod, sym } = fit;
+  const n = sym.bits.length;
+  const x0 = Math.round((W - n * mod) / 2);
   const barEnd = digitBase - capH - 2;
   const guardEnd = digitBase - Math.round(capH * 0.45);
-  for (let i = 0; i < 95; i++) {
-    if (bits[i] !== '1') continue;
-    const end = isGuardModule(i) ? guardEnd : barEnd;
+  for (let i = 0; i < n; i++) {
+    if (sym.bits[i] !== '1') continue;
+    const end = sym.guard && sym.guard(i) ? guardEnd : barEnd;
     c.fillRect(x0 + i * mod, top, mod, end - top);
   }
 
-  // Ziffern in klassischer EAN-Anordnung
-  c.font = `600 ${dfs}px ${FONT_DIGITS}`;
-  c.fillText(code[0], x0 - 4.5 * mod, digitBase);
-  for (let i = 1; i <= 6; i++) c.fillText(code[i], x0 + (3 + (i - 1) * 7 + 3.5) * mod, digitBase);
-  for (let i = 7; i <= 12; i++) c.fillText(code[i], x0 + (50 + (i - 7) * 7 + 3.5) * mod, digitBase);
-  return { W, H };
+  // Klarschrift unter dem Barcode
+  if (sym.digits) {
+    c.font = `600 ${dfs}px ${FONT_DIGITS}`;
+    for (const [ch, pos] of sym.digits) c.fillText(ch, x0 + pos * mod, digitBase);
+  } else {
+    let tfs = dfs;
+    c.font = `600 ${tfs}px ${FONT_DIGITS}`;
+    while (tfs > 9 && c.measureText(sym.text).width > maxText) { tfs--; c.font = `600 ${tfs}px ${FONT_DIGITS}`; }
+    c.fillText(sym.text, W / 2, digitBase);
+  }
+  return { W, H, ok: true };
 }
 
 // Graustufen in reines Schwarz/Weiß umwandeln (1 = Punkt drucken)
@@ -491,21 +632,85 @@ const S = {
   printing: null,                 // { done, total, current, cancel }
   connecting: false,
   dialog: null,
-  removed: null
+  removed: null,
+  catalog: null                   // Artikel aus der Kasse: { products: [{ code, name }], exportedAt, importedAt, source }
 };
+const LS_CAT = 'barcode-label-printer-catalog-v1';
+const LS_KASSE = 'barcode-kasse-v1';   // Speicher der Barcode-Kasse (gleiche Adresse tobiwald.github.io)
+let catByName = new Map(), catByCode = new Map();
 const printer = new LabelPrinter(() => renderChip());
 
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if (d && Array.isArray(d.items)) S.items = d.items.filter(it => it && it.name && /^\d{13}$/.test(it.code)).map(it => ({ ...it, qty: clampQty(it.qty) }));
+    if (d && Array.isArray(d.items)) S.items = d.items.filter(it => it && it.name && typeof it.code === 'string' && it.code).map(it => ({ ...it, qty: clampQty(it.qty) }));
     if (d && d.settings) {
       if (SIZES[d.settings.size]) S.settings.size = d.settings.size;
       const den = +d.settings.density; if (den >= 1 && den <= 8) S.settings.density = den;
     }
   } catch (e) {}
+  try {
+    const c = JSON.parse(localStorage.getItem(LS_CAT) || 'null');
+    if (c && Array.isArray(c.products)) S.catalog = c;
+  } catch (e) {}
+  indexCatalog();
 }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify({ items: S.items, settings: S.settings })); } catch (e) {} }
+
+function saveCatalog() { try { localStorage.setItem(LS_CAT, JSON.stringify(S.catalog)); } catch (e) {} }
+
+// Liest ein Backup der Barcode-Kasse (oder ihren Speicher) und holt Name und Barcode jedes Artikels
+function parseKasseData(text) {
+  let b;
+  try { b = JSON.parse(text); } catch (e) { return null; }
+  let list = null;
+  if (b && Array.isArray(b.products)) list = b.products;
+  else if (b && b.products && typeof b.products === 'object') list = Object.values(b.products);
+  if (!list) return null;
+  const seen = new Set(), products = [];
+  let examples = 0;
+  for (const p of list) {
+    if (!p || p.code == null) continue;
+    const code = String(p.code).trim();
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+    if (p.example) examples++;
+    products.push({ code, name: normName(p.name) || ('Artikel ' + code.slice(-4)) });
+  }
+  products.sort((x, y) => x.name.localeCompare(y.name, 'de', { sensitivity: 'base' }));
+  return { products, exportedAt: typeof b.exportedAt === 'string' ? b.exportedAt : '', onlyExamples: examples > 0 && examples === products.length };
+}
+
+function kasseOnThisDevice() {
+  try {
+    const raw = localStorage.getItem(LS_KASSE);
+    const data = raw ? parseKasseData(raw) : null;
+    return data && data.products.length && !data.onlyExamples ? data : null;
+  } catch (e) { return null; }
+}
+
+function setCatalog(data, source) {
+  S.catalog = { products: data.products, exportedAt: data.exportedAt, importedAt: new Date().toISOString(), source };
+  saveCatalog();
+  indexCatalog();
+}
+
+function indexCatalog() {
+  catByName = new Map(); catByCode = new Map();
+  const list = S.catalog ? S.catalog.products : [];
+  for (const p of list) {
+    if (!catByName.has(nameKey(p.name))) catByName.set(nameKey(p.name), p);
+    catByCode.set(p.code, p);
+  }
+  const dl = document.getElementById('catNames');
+  if (dl) dl.innerHTML = list.map(p => '<option value="' + esc(p.name) + '"></option>').join('');
+  const t = document.getElementById('catBtnTxt');
+  if (t) t.textContent = list.length ? 'Artikel aus der Kasse (' + list.length + ')' : 'Artikel aus der Kasse';
+  const h = document.getElementById('addHint');
+  if (h) h.textContent = list.length
+    ? 'Artikel aus der Kasse behalten ihren Barcode. Neue Produkte bekommen automatisch einen, gleicher Name ergibt immer denselben.'
+    : 'Der Barcode entsteht automatisch aus dem Namen. Gleicher Name, gleicher Barcode, auch beim Nachdrucken.';
+}
 
 function clampQty(n) { n = Math.round(+n); return Number.isFinite(n) ? Math.max(1, Math.min(999, n)) : 1; }
 function esc(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
@@ -549,12 +754,13 @@ function renderList() {
   ul.innerHTML = '';
   const busy = !!S.printing;
   for (const it of S.items) {
+    const fit = barcodeFit(it.code, S.settings.size);
     const li = document.createElement('li');
     li.className = 'item';
     li.dataset.id = it.id;
     li.innerHTML =
       '<div class="lab"></div>' +
-      '<div class="meta"><div class="nm">' + esc(it.name) + '</div><div class="cd">' + prettyCode(it.code) + '</div></div>' +
+      '<div class="meta"><div class="nm">' + esc(it.name) + '</div><div class="cd">' + esc(prettyCode(it.code)) + '</div>' + (fit.reason ? '<div class="warnline">' + esc(fit.reason) + '</div>' : '') + '</div>' +
       '<div class="ctl">' +
         '<div class="stepper" role="group" aria-label="Anzahl für ' + esc(it.name) + '">' +
           '<button type="button" data-action="dec" aria-label="Eins weniger"' + (it.qty <= 1 || busy ? ' disabled' : '') + '>−</button>' +
@@ -617,12 +823,18 @@ function renderDialog() {
   d.anim = false;
   if (d.type === 'qty') {
     const existing = S.items.find(it => it.code === d.code);
+    const fit = barcodeFit(d.code, S.settings.size);
+    const pills = [];
+    if (existing) pills.push('<span class="pill">Schon ' + existing.qty + '× in der Liste, wird dazugezählt</span>');
+    if (d.fromKasse) pills.push('<span class="pill">Barcode aus der Kasse</span>');
+    else if (S.catalog && S.catalog.products.length) pills.push('<span class="pill">Noch nicht in der Kasse</span>');
+    if (fit.reason) pills.push('<span class="pill warn">' + esc(fit.reason) + '</span>');
     dlg.innerHTML =
       '<form class="sheet' + anim + '" id="qtyForm">' +
         '<h3 id="dlgTitle">Wie oft drucken?</h3>' +
         '<div class="preview"></div>' +
-        '<div class="code">' + prettyCode(d.code) + '</div>' +
-        (existing ? '<div class="pillrow"><span class="pill">Schon ' + existing.qty + '× in der Liste, wird dazugezählt</span></div>' : '') +
+        '<div class="code">' + esc(prettyCode(d.code)) + '</div>' +
+        (pills.length ? '<div class="pillrow">' + pills.join('') + '</div>' : '') +
         '<div class="qty-big">' +
           '<button type="button" data-action="qminus" aria-label="Eins weniger">−</button>' +
           '<input id="qtyIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + d.qty + '" aria-label="Anzahl">' +
@@ -631,7 +843,7 @@ function renderDialog() {
         '<div class="quick">' + [1, 5, 10, 20, 50].map(n => '<button type="button" data-action="qset" data-n="' + n + '" aria-pressed="' + (d.qty === n) + '">' + n + '</button>').join('') + '</div>' +
         '<div class="actions">' +
           '<button type="button" class="btn ghost" data-action="close">Abbrechen</button>' +
-          '<button type="submit" class="btn primary">In die Liste</button>' +
+          '<button type="submit" class="btn primary"' + (fit.ok ? '' : ' disabled') + '>In die Liste</button>' +
         '</div>' +
       '</form>';
     dlg.querySelector('.preview').appendChild(stickerCanvas(d.name, d.code));
@@ -659,6 +871,40 @@ function renderDialog() {
       '</div>';
     return;
   }
+  if (d.type === 'catalog') {
+    const cat = S.catalog;
+    if (!cat || !cat.products.length) {
+      const local = kasseOnThisDevice();
+      dlg.innerHTML =
+        '<div class="sheet' + anim + '">' +
+          '<h3 id="dlgTitle">Artikel aus der Kasse holen</h3>' +
+          '<ol class="steps">' +
+            '<li>In der Kasse auf <b>Umsatz</b> und dann <b>Backup speichern</b> tippen.</li>' +
+            '<li>Die Datei aufs Handy schicken, zum Beispiel per Mail, per Messenger an dich selbst oder über Google Drive.</li>' +
+            '<li>Hier die Datei auswählen. Name und Barcode jedes Artikels werden übernommen, Preise und Umsätze nicht.</li>' +
+          '</ol>' +
+          '<div class="stack">' +
+            '<button type="button" class="btn primary" data-action="cat-file">Backup-Datei wählen</button>' +
+            (local ? '<button type="button" class="btn" data-action="cat-local">Aus der Kasse auf diesem Gerät (' + local.products.length + ' Artikel)</button>' : '') +
+            '<button type="button" class="btn ghost" data-action="close">Abbrechen</button>' +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    const when = new Date(cat.exportedAt || cat.importedAt);
+    const date = isNaN(when) ? '' : when.toLocaleDateString('de-DE', { day: 'numeric', month: 'numeric', year: 'numeric' });
+    dlg.innerHTML =
+      '<div class="sheet tall' + anim + '">' +
+        '<div class="cat-head"><h3 id="dlgTitle">Artikel aus der Kasse</h3><button type="button" class="textbtn" data-action="cat-file">Neues Backup</button></div>' +
+        '<div class="cat-sub">' + cat.products.length + ' Artikel' + (date ? ' · Stand ' + date : '') + '</div>' +
+        (cat.products.length > 6 ? '<input id="catSearch" class="inp search" type="search" placeholder="Artikel suchen" autocomplete="off" enterkeyhint="search" value="' + esc(d.q || '') + '" aria-label="Artikel suchen">' : '') +
+        '<div class="cat-tools"><button type="button" class="textbtn" data-action="cat-all" id="catAll"></button><span id="catCount"></span></div>' +
+        '<ul class="cat-list" id="catList"></ul>' +
+        '<div class="actions"><button type="button" class="btn ghost" data-action="close">Abbrechen</button><button type="button" class="btn primary" data-action="cat-add" id="catAdd">Hinzufügen</button></div>' +
+      '</div>';
+    renderCatList();
+    return;
+  }
   if (d.type === 'clear') {
     dlg.innerHTML =
       '<div class="sheet' + anim + '">' +
@@ -668,6 +914,62 @@ function renderDialog() {
       '</div>';
   }
 }
+
+function catFiltered() {
+  const q = nameKey(S.dialog.q || '');
+  const list = S.catalog ? S.catalog.products : [];
+  return q ? list.filter(p => nameKey(p.name).includes(q) || p.code.includes(q)) : list;
+}
+
+const CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function renderCatList() {
+  const d = S.dialog, ul = $('#catList');
+  if (!d || d.type !== 'catalog' || !ul) return;
+  const list = catFiltered();
+  ul.innerHTML = list.length ? list.map(p => {
+    const q = d.sel.get(p.code) || 0;
+    const fit = barcodeFit(p.code, S.settings.size);
+    return '<li class="crow' + (q ? ' on' : '') + '" data-code="' + esc(p.code) + '">' +
+      '<button type="button" class="ctog" data-action="cat-toggle" aria-pressed="' + (q > 0) + '"' + (fit.ok ? '' : ' disabled') + '>' +
+        '<span class="box" aria-hidden="true">' + CHECK_SVG + '</span>' +
+        '<span class="ctext"><span class="cname">' + esc(p.name) + '</span><span class="ccode">' + esc(prettyCode(p.code)) + (fit.ok ? '' : ' · passt nicht aufs Etikett') + '</span></span>' +
+      '</button>' +
+      (q ? '<div class="stepper sm" role="group" aria-label="Anzahl"><button type="button" data-action="cat-dec" aria-label="Eins weniger">−</button><output>' + q + '</output><button type="button" data-action="cat-inc" aria-label="Eins mehr"' + (q >= 999 ? ' disabled' : '') + '>+</button></div>' : '') +
+    '</li>';
+  }).join('') : '<li class="cat-empty">Kein Artikel passt zu „' + esc(d.q) + '“.</li>';
+  renderCatFoot();
+}
+
+function renderCatFoot() {
+  const d = S.dialog;
+  let nArt = 0, nLab = 0;
+  for (const q of d.sel.values()) if (q > 0) { nArt++; nLab += q; }
+  $('#catCount').textContent = nArt ? nArt + ' Artikel · ' + plural(nLab, 'Etikett', 'Etiketten') : '';
+  $('#catAdd').disabled = !nArt;
+  const sel = catFiltered().filter(p => barcodeFit(p.code, S.settings.size).ok);
+  const allOn = sel.length > 0 && sel.every(p => (d.sel.get(p.code) || 0) > 0);
+  const all = $('#catAll');
+  all.hidden = !sel.length;
+  all.dataset.on = allOn ? '1' : '';
+  all.textContent = allOn ? 'Auswahl aufheben' : (d.q ? 'Alle Treffer auswählen' : 'Alle auswählen');
+}
+
+function addFromCatalog() {
+  const d = S.dialog;
+  let nArt = 0, nLab = 0;
+  for (const p of S.catalog.products) {
+    const q = d.sel.get(p.code) || 0;
+    if (!q) continue;
+    const ex = S.items.find(it => it.code === p.code);
+    if (ex) ex.qty = clampQty(ex.qty + q);
+    else S.items.push({ id: uid(), name: p.name, code: p.code, qty: q });
+    nArt++; nLab += q;
+  }
+  save(); closeDialog(); render();
+  toast(nArt + ' Artikel hinzugefügt (' + plural(nLab, 'Etikett', 'Etiketten') + ')');
+}
+
+function openCatalog() { openDialog({ type: 'catalog', sel: new Map(), q: '' }); }
 
 /* ---------- Toast ---------- */
 let toastTimer;
@@ -683,9 +985,21 @@ function toast(msg, opts = {}) {
 
 /* ---------- Ablauf ---------- */
 function startAdd(raw) {
-  const name = normName(raw);
-  if (!name) { $('#nameIn').focus(); return; }
-  openDialog({ type: 'qty', name, code: codeForName(name), qty: 1 });
+  const typed = normName(raw);
+  if (!typed) { $('#nameIn').focus(); return; }
+  const hit = catByName.get(nameKey(typed));
+  if (hit) {
+    openDialog({ type: 'qty', name: hit.name, code: hit.code, qty: 1, fromKasse: true });
+  } else {
+    // Neuer Code, der weder in der Kasse noch in der Liste schon zu einem anderen Artikel gehört
+    const key = nameKey(typed);
+    const taken = c => {
+      const p = catByCode.get(c);
+      if (p && nameKey(p.name) !== key) return true;
+      return S.items.some(it => it.code === c && nameKey(it.name) !== key);
+    };
+    openDialog({ type: 'qty', name: typed, code: codeForName(typed, taken), qty: 1 });
+  }
   setTimeout(() => { const q = $('#qtyIn'); if (q) { q.focus(); q.select(); } }, 60);
 }
 
@@ -747,10 +1061,16 @@ async function keepAwake(on) {
   } catch (e) {}
 }
 
-async function printJobs(jobs) {
+async function printJobs(allJobs) {
   // jobs: [{ name, code, qty }]
+  if (S.printing) return;
+  const jobs = allJobs.filter(j => barcodeFit(j.code, S.settings.size).ok);
+  const skipped = allJobs.length - jobs.length;
   const total = jobs.reduce((a, j) => a + j.qty, 0);
-  if (!total || S.printing) return;
+  if (!total) {
+    if (skipped) toast('Kein Barcode passt auf diese Etikettengröße. In den Einstellungen ein längeres Etikett wählen.', { bad: true, ms: 6000 });
+    return;
+  }
   if (!printer.connected) {
     const ok = await connectPrinter(false);
     if (!ok) return;
@@ -774,7 +1094,8 @@ async function printJobs(jobs) {
       }
     }
     const { done, cancel } = S.printing;
-    toast(cancel ? 'Gestoppt nach ' + plural(done, 'Etikett', 'Etiketten') + '.' : 'Fertig: ' + plural(done, 'Etikett', 'Etiketten') + ' gedruckt.');
+    toast((cancel ? 'Gestoppt nach ' + plural(done, 'Etikett', 'Etiketten') + '.' : 'Fertig: ' + plural(done, 'Etikett', 'Etiketten') + ' gedruckt.') +
+      (skipped ? ' ' + plural(skipped, 'Produkt', 'Produkte') + ' übersprungen, Barcode passt nicht aufs Etikett.' : ''), { ms: skipped ? 6000 : 3200 });
   } catch (e) {
     console.error(e);
     const done = S.printing ? S.printing.done : 0;
@@ -798,6 +1119,10 @@ dlg.addEventListener('input', e => {
       dlg.querySelectorAll('[data-action="qset"]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === S.dialog.qty && e.target.value !== '')));
     }
   }
+  if (e.target.id === 'catSearch' && S.dialog && S.dialog.type === 'catalog') {
+    S.dialog.q = e.target.value;
+    renderCatList();
+  }
   if (e.target.id === 'denIn') {
     S.settings.density = +e.target.value;
     $('#denOut').textContent = S.settings.density;
@@ -810,6 +1135,8 @@ document.addEventListener('click', e => {
   if (!el || el.disabled) return;
   const li = el.closest('.item');
   const it = li ? S.items.find(x => x.id === li.dataset.id) : null;
+  const crow = el.closest('.crow');
+  const ccode = crow ? crow.dataset.code : null;
   switch (el.dataset.action) {
     case 'connect': closeDialog(); connectPrinter(false); break;
     case 'connect-all': closeDialog(); connectPrinter(true); break;
@@ -843,11 +1170,57 @@ document.addEventListener('click', e => {
     case 'qminus': setDialogQty((S.dialog ? S.dialog.qty : 1) - 1); break;
     case 'qplus': setDialogQty((S.dialog ? S.dialog.qty : 1) + 1); break;
     case 'qset': setDialogQty(+el.dataset.n); break;
+    case 'catalog': openCatalog(); break;
+    case 'cat-file': catFile.click(); break;
+    case 'cat-local': {
+      const data = kasseOnThisDevice();
+      if (data) { setCatalog(data, 'Kasse'); openCatalog(); toast(data.products.length + ' Artikel aus der Kasse übernommen'); }
+      break;
+    }
+    case 'cat-toggle':
+      if (ccode != null && S.dialog) { const d = S.dialog; d.sel.set(ccode, (d.sel.get(ccode) || 0) > 0 ? 0 : 1); renderCatList(); }
+      break;
+    case 'cat-inc':
+      if (ccode != null && S.dialog) { const d = S.dialog; d.sel.set(ccode, clampQty((d.sel.get(ccode) || 0) + 1)); renderCatList(); }
+      break;
+    case 'cat-dec':
+      if (ccode != null && S.dialog) { const d = S.dialog; d.sel.set(ccode, Math.max(0, (d.sel.get(ccode) || 0) - 1)); renderCatList(); }
+      break;
+    case 'cat-all':
+      if (S.dialog && S.dialog.type === 'catalog') {
+        const d = S.dialog, on = !!el.dataset.on;
+        for (const p of catFiltered()) {
+          if (!barcodeFit(p.code, S.settings.size).ok) continue;
+          if (on) d.sel.set(p.code, 0);
+          else if (!(d.sel.get(p.code) > 0)) d.sel.set(p.code, 1);
+        }
+        renderCatList();
+      }
+      break;
+    case 'cat-add': if (S.dialog && S.dialog.type === 'catalog') addFromCatalog(); break;
     case 'size':
       S.settings.size = el.dataset.size;
       save(); renderDialog(); render();
       break;
   }
+});
+
+// Dateiauswahl liegt außerhalb der Seite, damit sie auch aus einem offenen Dialog heraus funktioniert
+const catFile = document.createElement('input');
+catFile.type = 'file';
+catFile.accept = '.json,application/json,text/plain';
+catFile.addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  let text = '';
+  try { text = await f.text(); } catch (err) {}
+  const data = parseKasseData(text);
+  if (!data) { toast('Das ist kein Backup der Barcode-Kasse. In der Kasse unter Umsatz auf „Backup speichern“ tippen.', { bad: true, ms: 6000 }); return; }
+  if (!data.products.length) { toast('In diesem Backup sind keine Artikel.', { bad: true }); return; }
+  setCatalog(data, 'Backup');
+  openCatalog();
+  toast(data.products.length + ' Artikel aus der Kasse geladen');
 });
 
 /* ---------- Start ---------- */
